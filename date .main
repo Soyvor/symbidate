@@ -1,0 +1,50 @@
+from flask import Flask, render_template, request
+from flask_sqlalchemy import SQLAlchemy
+
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
+db = SQLAlchemy(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(80))
+    college = db.Column(db.String(120))
+    age = db.Column(db.Integer)
+    gender = db.Column(db.String(20))
+    interests = db.Column(db.String(200))
+
+@app.route('/')
+def home():
+    return render_template('home.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        name = request.form['name']
+        college = request.form['college']
+        age = request.form['age']
+        gender = request.form['gender']
+        interests = request.form['interests']
+
+        user = User(name=name, college=college, age=age, gender=gender, interests=interests)
+        db.session.add(user)
+        db.session.commit()
+
+        return redirect('/')
+    return render_template('register.html')
+
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    if request.method == 'POST':
+        college = request.form['college']
+        age = request.form['age']
+        gender = request.form['gender']
+        interests = request.form['interests']
+
+        users = User.query.filter_by(college=college, age=age, gender=gender, interests=interests).all()
+
+        return render_template('search.html', users=users)
+    return render_template('search.html')
+
+if __name__ == '__main__':
+    app.run(debug=True)
